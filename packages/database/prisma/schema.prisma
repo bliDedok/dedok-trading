@@ -31,16 +31,79 @@ enum HealthStatus {
   DOWN
 }
 
+enum AssetStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CandleTimeframe {
+  M15
+  H1
+  H4
+  D1
+}
+
+enum MarketDataSource {
+  BINANCE
+}
+
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
+  id           String   @id @default(cuid())
+  email        String   @unique
   passwordHash String
   displayName  String?
-  role         UserRole   @default(VIEWER)
-  isActive     Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  role         UserRole @default(VIEWER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   auditLogs    AuditLog[]
+}
+
+model Asset {
+  id                String      @id @default(cuid())
+  symbol            String      @unique
+  baseAsset         String
+  quoteAsset        String
+  status            AssetStatus @default(ACTIVE)
+  pricePrecision    Int
+  quantityPrecision Int
+  minQuantity       Decimal?    @db.Decimal(30, 12)
+  stepSize          Decimal?    @db.Decimal(30, 12)
+  minNotional       Decimal?    @db.Decimal(30, 12)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  candles           Candle[]
+
+  @@index([status, symbol])
+}
+
+model Candle {
+  id                  String           @id @default(cuid())
+  assetId             String
+  symbol              String
+  timeframe           CandleTimeframe
+  source              MarketDataSource @default(BINANCE)
+  openTime            DateTime
+  closeTime           DateTime
+  open                Decimal          @db.Decimal(30, 12)
+  high                Decimal          @db.Decimal(30, 12)
+  low                 Decimal          @db.Decimal(30, 12)
+  close               Decimal          @db.Decimal(30, 12)
+  volume              Decimal          @db.Decimal(38, 18)
+  quoteVolume         Decimal          @db.Decimal(38, 18)
+  tradeCount          Int
+  takerBuyBaseVolume  Decimal          @db.Decimal(38, 18)
+  takerBuyQuoteVolume Decimal          @db.Decimal(38, 18)
+  isClosed            Boolean          @default(true)
+  receivedAt          DateTime
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  asset               Asset            @relation(fields: [assetId], references: [id], onDelete: Restrict)
+
+  @@unique([assetId, timeframe, openTime])
+  @@index([symbol, timeframe, openTime])
+  @@index([timeframe, closeTime])
+  @@index([isClosed, closeTime])
 }
 
 model AppSetting {
