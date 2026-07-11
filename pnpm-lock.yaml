@@ -106,6 +106,9 @@ importers:
       '@dedok/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@dedok/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       pino:
         specifier: 9.7.0
         version: 9.7.0

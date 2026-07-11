@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@dedok/database": "workspace:*",
+    "@dedok/shared": "workspace:*",
     "pino": "9.7.0",
     "zod": "4.0.14"
   },
