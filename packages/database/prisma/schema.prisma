@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum AppEnvironment {
+  DEVELOPMENT
+  TEST
+  PRODUCTION
+}
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum HealthStatus {
+  HEALTHY
+  DEGRADED
+  DOWN
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  displayName  String?
+  role         UserRole   @default(VIEWER)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+}
+
+model AppSetting {
+  id          String         @id @default(cuid())
+  key         String
+  environment AppEnvironment @default(DEVELOPMENT)
+  value       Json
+  isSecret    Boolean        @default(false)
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([key, environment])
+  @@index([environment, updatedAt])
+}
+
+model SystemHealthEvent {
+  id        String       @id @default(cuid())
+  component String
+  status    HealthStatus
+  message   String
+  metadata  Json?
+  createdAt DateTime     @default(now())
+
+  @@index([component, createdAt])
+  @@index([status, createdAt])
+}
+
+model AuditLog {
+  id          String        @id @default(cuid())
+  actorUserId String?
+  actorType   String
+  action      String
+  entityType  String?
+  entityId    String?
+  severity    AuditSeverity @default(INFO)
+  requestId   String?
+  ipAddress   String?
+  userAgent   String?
+  before      Json?
+  after       Json?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  actorUser   User?         @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([action, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([severity, createdAt])
+}

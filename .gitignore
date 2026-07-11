@@ -1,0 +1,11 @@
+node_modules
+.pnpm-store
+.env
+.env.local
+!.env.example
+dist
+.next
+coverage
+*.log
+packages/database/src/generated
+postgres-data

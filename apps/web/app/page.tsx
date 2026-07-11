@@ -1,0 +1,4 @@
+const principles = ['Paper trading aktif secara bawaan', 'AI tidak mengeksekusi atau mengubah level trading', 'Semua keputusan memiliki audit trail', 'Emergency stop aktif secara bawaan'];
+export default function HomePage() {
+  return <main className="mx-auto min-h-screen max-w-5xl p-8"><div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8"><p className="text-sm uppercase tracking-[0.3em] text-emerald-400">Phase 0 Foundation</p><h1 className="mt-3 text-4xl font-semibold">Dedok Trading Assistant</h1><p className="mt-4 max-w-2xl text-zinc-400">Dashboard trading crypto yang mengutamakan konsistensi strategi, transparansi sinyal, pengendalian risiko, dan pencatatan keputusan.</p><ul className="mt-8 grid gap-3 md:grid-cols-2">{principles.map((item) => <li key={item} className="rounded-lg border border-zinc-800 p-4 text-zinc-200">{item}</li>)}</ul></div></main>;
+}

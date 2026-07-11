@@ -1,0 +1,8 @@
+node_modules
+.pnpm-store
+.git
+.next
+dist
+coverage
+.env
+postgres-data
