@@ -122,6 +122,86 @@ export const marketCandlesQuerySchema = z.object({
   before: z.string().datetime().optional(),
 });
 
+export const marketCandleSchema = z.object({
+  id: z.string().min(1),
+  symbol: symbolSchema,
+  timeframe: timeframeSchema,
+  source: z.literal('BINANCE'),
+  openTime: z.string().datetime(),
+  closeTime: z.string().datetime(),
+  open: decimalStringSchema,
+  high: decimalStringSchema,
+  low: decimalStringSchema,
+  close: decimalStringSchema,
+  volume: decimalStringSchema,
+  quoteVolume: decimalStringSchema,
+  tradeCount: z.number().int().nonnegative(),
+  takerBuyBaseVolume: decimalStringSchema,
+  takerBuyQuoteVolume: decimalStringSchema,
+  isClosed: z.literal(true),
+  receivedAt: z.string().datetime(),
+});
+
+export type MarketCandle = z.infer<
+  typeof marketCandleSchema
+>;
+
+export const marketCandlesResponseSchema = z.object({
+  data: z.array(marketCandleSchema),
+  pagination: z.object({
+    limit: z.number().int().positive(),
+    nextBefore: z.string().datetime().nullable(),
+    hasMore: z.boolean(),
+  }),
+});
+
+export type MarketCandlesResponse = z.infer<
+  typeof marketCandlesResponseSchema
+>;
+
 export type MarketCandlesQuery = z.infer<
   typeof marketCandlesQuerySchema
+>;
+
+export const latestCandleQuerySchema = z.object({
+  symbol: symbolSchema,
+  timeframe: timeframeSchema,
+});
+
+export type LatestCandleQuery = z.infer<
+  typeof latestCandleQuerySchema
+>;
+
+export const latestCandleResponseSchema = z.object({
+  data: marketCandleSchema,
+});
+
+export type LatestCandleResponse = z.infer<
+  typeof latestCandleResponseSchema
+>;
+
+export const marketHealthItemSchema = z.object({
+  symbol: symbolSchema,
+  timeframe: timeframeSchema,
+  closeTime: z.string().datetime(),
+  ageMs: z.number().int().nonnegative(),
+  staleAfterMs: z.number().int().positive(),
+  stale: z.boolean(),
+});
+
+export const marketHealthResponseSchema = z.object({
+  status: z.enum([
+    'HEALTHY',
+    'DEGRADED',
+    'DOWN',
+  ]),
+  checkedAt: z.string().datetime(),
+  expectedMarkets: z.number().int().positive(),
+  availableMarkets: z.number().int().nonnegative(),
+  staleMarkets: z.number().int().nonnegative(),
+  markets: z.array(marketHealthItemSchema),
+});
+
+export type MarketHealthResponse = z.infer<
+  typeof marketHealthResponseSchema
 >;
