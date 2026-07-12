@@ -6,6 +6,11 @@ import {
   timeframeToDatabase,
 } from '../src/market.js';
 
+import {
+  marketCandlesQuerySchema,
+  marketCandlesResponseSchema,
+} from '../src/market.js';
+
 describe('market contracts', () => {
   it('maps supported timeframes to database enums', () => {
     expect(timeframeToDatabase['15m']).toBe('M15');
@@ -85,5 +90,51 @@ describe('market contracts', () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe('marketCandlesResponseSchema', () => {
+  it('accepts a valid candle page', () => {
+    const result =
+      marketCandlesResponseSchema.parse({
+        data: [
+          {
+            id: 'candle-1',
+            symbol: 'BTCUSDT',
+            timeframe: '15m',
+            source: 'BINANCE',
+            openTime:
+              '2026-07-12T00:30:00.000Z',
+            closeTime:
+              '2026-07-12T00:44:59.999Z',
+            open: '118000.000000000000',
+            high: '118500.000000000000',
+            low: '117900.000000000000',
+            close: '118300.000000000000',
+            volume:
+              '123.450000000000000000',
+            quoteVolume:
+              '14500000.000000000000000000',
+            tradeCount: 1234,
+            takerBuyBaseVolume:
+              '60.000000000000000000',
+            takerBuyQuoteVolume:
+              '7100000.000000000000000000',
+            isClosed: true,
+            receivedAt:
+              '2026-07-12T00:45:00.220Z',
+          },
+        ],
+        pagination: {
+          limit: 100,
+          nextBefore: null,
+          hasMore: false,
+        },
+      });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0]?.symbol).toBe(
+      'BTCUSDT',
+    );
   });
 });

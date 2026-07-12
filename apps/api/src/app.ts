@@ -5,6 +5,12 @@ import rateLimit from '@fastify/rate-limit';
 import type { PrismaClient } from '@dedok/database';
 import type { ApiEnv } from './config/env.js';
 import { healthRoutes } from './routes/health.js';
+import {
+  MarketQueryRepository,
+} from './repositories/market-query-repository.js';
+import {
+  marketRoutes,
+} from './routes/market.js';
 
 interface BuildAppOptions { env: ApiEnv; prisma: PrismaClient; version?: string }
 
@@ -23,6 +29,14 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   app.setErrorHandler((error, request, reply) => {
     request.log.error({ err: error }, 'Unhandled request error');
     void reply.code(500).send({ error: { code: 'INTERNAL_SERVER_ERROR', message: 'Internal server error', requestId: request.id } });
+  });
+  const marketRepository =
+  new MarketQueryRepository(
+    options.prisma,
+  );
+
+  await app.register(marketRoutes, {
+    repository: marketRepository,
   });
   return app;
 }
