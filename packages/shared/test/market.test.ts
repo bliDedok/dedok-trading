@@ -11,6 +11,8 @@ import {
   latestIndicatorResponseSchema,
   marketCandlesResponseSchema,
   timeframeToDatabase,
+  latestSignalQuerySchema,
+  latestSignalResponseSchema,
 } from '../src/market.js';
 
 describe('market contracts', () => {
@@ -277,5 +279,64 @@ describe(
         ),
       ).not.toThrow();
     });
+  
+    describe(
+    'signal API contracts',
+    () => {
+      it('parses a latest signal query', () => {
+        const result =
+          latestSignalQuerySchema.parse({
+            symbol: 'BTCUSDT',
+            timeframe: '15m',
+            historyLimit: '300',
+          });
+
+        expect(result).toEqual({
+          symbol: 'BTCUSDT',
+          timeframe: '15m',
+          historyLimit: 300,
+        });
+      });
+
+      it('accepts a latest signal response', () => {
+        const response = {
+          data: {
+            symbol: 'BTCUSDT',
+            timeframe: '15m',
+            candleCount: 300,
+            signal: 'SHORT',
+            confidence: 75,
+            bullishScore: 10,
+            bearishScore: 85,
+            evaluatedAt:
+              '2026-07-12T06:00:00.000Z',
+            candleCloseTime:
+              '2026-07-12T05:44:59.999Z',
+            reasons: [
+              'Close is below SMA 50',
+            ],
+            rules: [
+              {
+                id: 'price-vs-sma',
+                label:
+                  'Price versus slow SMA',
+                direction:
+                  'BEARISH',
+                score: 20,
+                reason:
+                  'Close is below SMA 50',
+              },
+            ],
+          },
+        };
+
+        expect(() =>
+          latestSignalResponseSchema.parse(
+            response,
+          ),
+        ).not.toThrow();
+      });
+    },
+  );
   },
 );

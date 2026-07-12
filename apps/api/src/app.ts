@@ -25,6 +25,16 @@ import {
 import {
   LatestIndicatorService,
 } from './services/latest-indicator-service.js';
+import {
+  TechnicalStrategy,
+} from '@dedok/strategies';
+
+import {
+  signalRoutes,
+} from './routes/signals.js';
+import {
+  LatestSignalService,
+} from './services/latest-signal-service.js';
 
 interface BuildAppOptions { env: ApiEnv; prisma: PrismaClient; version?: string }
 
@@ -74,6 +84,23 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
         latestIndicatorService,
     },
   );
-  
+
+  const technicalStrategy =
+  new TechnicalStrategy();
+
+  const latestSignalService =
+    new LatestSignalService(
+      latestIndicatorService,
+      technicalStrategy,
+    );
+
+  await app.register(
+    signalRoutes,
+    {
+      service:
+        latestSignalService,
+    },
+  );
+
   return app;
 }

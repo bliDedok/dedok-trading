@@ -286,3 +286,82 @@ export type LatestIndicatorResponse =
   z.infer<
     typeof latestIndicatorResponseSchema
   >;
+
+  export const latestSignalQuerySchema =
+  latestIndicatorQuerySchema;
+
+export type LatestSignalQuery =
+  z.infer<
+    typeof latestSignalQuerySchema
+  >;
+
+export const tradingSignalSchema =
+  z.enum([
+    'LONG',
+    'SHORT',
+    'NEUTRAL',
+  ]);
+
+export const strategyRuleDirectionSchema =
+  z.enum([
+    'BULLISH',
+    'BEARISH',
+    'NEUTRAL',
+  ]);
+
+export const strategyRuleResultSchema =
+  z.object({
+    id: z.string().min(1),
+    label: z.string().min(1),
+    direction:
+      strategyRuleDirectionSchema,
+    score: z
+      .number()
+      .finite()
+      .min(0)
+      .max(100),
+    reason: z.string().min(1),
+  });
+
+export const latestSignalResponseSchema =
+  z.object({
+    data: z.object({
+      symbol: symbolSchema,
+      timeframe: timeframeSchema,
+      candleCount: z
+        .number()
+        .int()
+        .nonnegative(),
+      signal: tradingSignalSchema,
+      confidence: z
+        .number()
+        .finite()
+        .min(0)
+        .max(100),
+      bullishScore: z
+        .number()
+        .finite()
+        .min(0)
+        .max(100),
+      bearishScore: z
+        .number()
+        .finite()
+        .min(0)
+        .max(100),
+      evaluatedAt:
+        z.string().datetime(),
+      candleCloseTime:
+        z.string().datetime(),
+      reasons:
+        z.array(z.string()),
+      rules:
+        z.array(
+          strategyRuleResultSchema,
+        ),
+    }),
+  });
+
+export type LatestSignalResponse =
+  z.infer<
+    typeof latestSignalResponseSchema
+  >;
