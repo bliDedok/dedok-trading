@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@dedok/database": "workspace:*",
+    "@dedok/indicators": "workspace:*",
     "@dedok/shared": "workspace:*",
     "@fastify/cors": "11.1.0",
     "@fastify/helmet": "13.0.1",

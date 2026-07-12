@@ -38,6 +38,9 @@ importers:
       '@dedok/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@dedok/indicators':
+        specifier: workspace:*
+        version: link:../../packages/indicators
       '@dedok/shared':
         specifier: workspace:*
         version: link:../../packages/shared

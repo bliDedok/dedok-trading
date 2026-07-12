@@ -205,3 +205,84 @@ export const marketHealthResponseSchema = z.object({
 export type MarketHealthResponse = z.infer<
   typeof marketHealthResponseSchema
 >;
+
+export const latestIndicatorQuerySchema =
+  z.object({
+    symbol: symbolSchema,
+    timeframe: timeframeSchema,
+    historyLimit: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1000)
+      .default(300),
+  });
+
+export type LatestIndicatorQuery =
+  z.infer<
+    typeof latestIndicatorQuerySchema
+  >;
+
+const nullableIndicatorValueSchema =
+  z.number().finite().nullable();
+
+const indicatorPeriodRecordSchema =
+  z.record(
+    z.string(),
+    nullableIndicatorValueSchema,
+  );
+
+export const indicatorSnapshotSchema =
+  z.object({
+    calculatedAt:
+      z.string().datetime(),
+    candleOpenTime:
+      z.string().datetime(),
+    candleCloseTime:
+      z.string().datetime(),
+    close: z.number().finite(),
+    sma: indicatorPeriodRecordSchema,
+    ema: indicatorPeriodRecordSchema,
+    rsi: indicatorPeriodRecordSchema,
+    atr: indicatorPeriodRecordSchema,
+    macd: z.object({
+      macd:
+        nullableIndicatorValueSchema,
+      signal:
+        nullableIndicatorValueSchema,
+      histogram:
+        nullableIndicatorValueSchema,
+    }),
+    bollingerBands: z.object({
+      middle:
+        nullableIndicatorValueSchema,
+      upper:
+        nullableIndicatorValueSchema,
+      lower:
+        nullableIndicatorValueSchema,
+    }),
+  });
+
+export type IndicatorSnapshotResponseData =
+  z.infer<
+    typeof indicatorSnapshotSchema
+  >;
+
+export const latestIndicatorResponseSchema =
+  z.object({
+    data: z.object({
+      symbol: symbolSchema,
+      timeframe: timeframeSchema,
+      candleCount: z
+        .number()
+        .int()
+        .nonnegative(),
+      snapshot:
+        indicatorSnapshotSchema,
+    }),
+  });
+
+export type LatestIndicatorResponse =
+  z.infer<
+    typeof latestIndicatorResponseSchema
+  >;

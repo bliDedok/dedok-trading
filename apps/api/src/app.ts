@@ -12,6 +12,20 @@ import {
   marketRoutes,
 } from './routes/market.js';
 
+import {
+  IndicatorSnapshotService,
+} from '@dedok/indicators';
+
+import {
+  IndicatorQueryRepository,
+} from './repositories/indicator-query-repository.js';
+import {
+  indicatorRoutes,
+} from './routes/indicators.js';
+import {
+  LatestIndicatorService,
+} from './services/latest-indicator-service.js';
+
 interface BuildAppOptions { env: ApiEnv; prisma: PrismaClient; version?: string }
 
 export async function buildApp(options: BuildAppOptions): Promise<FastifyInstance> {
@@ -38,5 +52,28 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   await app.register(marketRoutes, {
     repository: marketRepository,
   });
+
+  const indicatorRepository =
+  new IndicatorQueryRepository(
+    options.prisma,
+  );
+
+  const indicatorSnapshotService =
+    new IndicatorSnapshotService();
+
+  const latestIndicatorService =
+    new LatestIndicatorService(
+      indicatorRepository,
+      indicatorSnapshotService,
+    );
+
+  await app.register(
+    indicatorRoutes,
+    {
+      service:
+        latestIndicatorService,
+    },
+  );
+  
   return app;
 }
