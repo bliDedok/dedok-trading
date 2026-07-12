@@ -62,6 +62,47 @@ const workerEnvSchema = z.object({
     .url()
     .default('https://api.binance.com'),
 
+      BINANCE_WS_ENABLED:
+    booleanStringSchema.default(true),
+
+  BINANCE_WS_BASE_URL: z
+    .string()
+    .url()
+    .default(
+      'wss://stream.binance.com:9443',
+    ),
+
+  BINANCE_WS_RECONNECT_BASE_DELAY_MS:
+    z.coerce
+      .number()
+      .int()
+      .min(100)
+      .max(60_000)
+      .default(1_000),
+
+  BINANCE_WS_RECONNECT_MAX_DELAY_MS:
+    z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(300_000)
+      .default(30_000),
+
+  BINANCE_WS_HEARTBEAT_INTERVAL_MS:
+    z.coerce
+      .number()
+      .int()
+      .min(1_000)
+      .max(300_000)
+      .default(30_000),
+
+  MARKET_STALE_AFTER_MS: z.coerce
+    .number()
+    .int()
+    .min(1_000)
+    .max(86_400_000)
+    .default(900_000),
+
   BINANCE_REQUEST_TIMEOUT_MS: z.coerce
     .number()
     .int()

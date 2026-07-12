@@ -12,6 +12,18 @@ import { MarketSyncJob } from './jobs/market-sync-job.js';
 import { BinanceRestClient } from './market-data/binance-rest-client.js';
 import { MarketDataRepository } from './repositories/market-data-repository.js';
 import { HistoricalCandleSync } from './services/historical-candle-sync.js';
+import {
+  BinanceWebSocketClient,
+} from './market-data/binance-websocket-client.js';
+import {
+  buildBinanceCombinedStreamUrl,
+} from './market-data/binance-websocket-parser.js';
+import {
+  LiveCandleService,
+} from './services/live-candle-service.js';
+import {
+  MarketDataStaleDetector,
+} from './services/stale-market-data.js';
 
 async function main(): Promise<void> {
   const environment = parseWorkerEnv(
@@ -58,6 +70,19 @@ async function main(): Promise<void> {
   const repository =
     new MarketDataRepository(prisma);
 
+    const liveCandleService =
+    new LiveCandleService(
+      repository,
+      logger,
+    );
+
+  await liveCandleService.initialize();
+
+  const staleDetector =
+    new MarketDataStaleDetector(
+      environment.MARKET_STALE_AFTER_MS,
+    );
+
   const binanceClient =
     new BinanceRestClient({
       baseUrl:
@@ -90,16 +115,83 @@ async function main(): Promise<void> {
       },
     );
 
-  const heartbeat = setInterval(() => {
+    const webSocketUrl =
+    buildBinanceCombinedStreamUrl(
+      environment.BINANCE_WS_BASE_URL,
+    );
+
+  const webSocketClient =
+    new BinanceWebSocketClient(
+      logger,
+      {
+        url: webSocketUrl.toString(),
+        reconnectBaseDelayMs:
+          environment
+            .BINANCE_WS_RECONNECT_BASE_DELAY_MS,
+        reconnectMaxDelayMs:
+          environment
+            .BINANCE_WS_RECONNECT_MAX_DELAY_MS,
+        heartbeatIntervalMs:
+          environment
+            .BINANCE_WS_HEARTBEAT_INTERVAL_MS,
+        onEvent: async (event) => {
+          await liveCandleService.enqueue(
+            event,
+          );
+        },
+        onIgnoredMessage: (result) => {
+          logger.debug(
+            {
+              reason: result.reason,
+            },
+            'WebSocket message ignored',
+          );
+        },
+        onStatusChange: (status) => {
+          logger.info(
+            {
+              status,
+            },
+            'Binance WebSocket status changed',
+          );
+        },
+      },
+    );
+
+    const heartbeat = setInterval(() => {
+    const webSocketHealth =
+      webSocketClient.getHealth();
+
+    const marketDataHealth =
+      environment.BINANCE_WS_ENABLED
+        ? staleDetector.evaluate(
+            webSocketHealth,
+          )
+        : {
+            status: 'DEGRADED' as const,
+            stale: false,
+            messageAgeMs: null,
+            reason:
+              'SOCKET_STOPPED' as const,
+          };
+
     logger.info(
       {
-        status: 'HEALTHY',
+        status:
+          marketDataHealth.status,
         marketSyncEnabled:
           environment.MARKET_SYNC_ENABLED,
         marketSyncStarted:
           marketSyncJob.isStarted(),
         marketSyncExecuting:
           marketSyncJob.isExecuting(),
+        webSocketEnabled:
+          environment.BINANCE_WS_ENABLED,
+        webSocket: webSocketHealth,
+        marketData:
+          marketDataHealth,
+        liveCandle:
+          liveCandleService.getHealth(),
         emergencyStop:
           environment
             .EMERGENCY_STOP_DEFAULT,
@@ -128,6 +220,10 @@ async function main(): Promise<void> {
 
     clearInterval(heartbeat);
     marketSyncJob.stop();
+
+    webSocketClient.stop();
+
+    await liveCandleService.waitForIdle();
 
     try {
       await disconnectPrisma();
@@ -194,6 +290,17 @@ async function main(): Promise<void> {
     logger.warn(
       {},
       'Historical market synchronization is disabled',
+    );
+  }
+
+    if (
+    environment.BINANCE_WS_ENABLED
+  ) {
+    webSocketClient.start();
+  } else {
+    logger.warn(
+      {},
+      'Binance WebSocket is disabled',
     );
   }
 }
